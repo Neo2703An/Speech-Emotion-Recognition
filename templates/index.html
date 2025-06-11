@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Speech Emotion Recognition</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- WaveSurfer.js for audio visualization -->
+    <script src="https://unpkg.com/wavesurfer.js@6/dist/wavesurfer.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Speech Emotion Recognition</h1>
+            <p>Upload an audio file to analyze the emotional content</p>
+        </header>
+
+        <div class="main-content">
+            <div class="model-selection">
+                <h2>Select Model</h2>
+                <div class="model-options">
+                    <label>
+                        <input type="radio" name="model" value="cnn" checked>
+                        <span class="model-card">
+                            <span class="model-name">CNN</span>
+                            <span class="model-desc">Convolutional Neural Network</span>
+                            <span class="model-info">Best for spectral patterns in audio</span>
+                        </span>
+                    </label>
+                    <label>
+                        <input type="radio" name="model" value="lstm">
+                        <span class="model-card">
+                            <span class="model-name">LSTM</span>
+                            <span class="model-desc">Long Short-Term Memory</span>
+                            <span class="model-info">Best for temporal patterns in audio</span>
+                        </span>
+                    </label>
+                    <label>
+                        <input type="radio" name="model" value="hybrid">
+                        <span class="model-card">
+                            <span class="model-name">Hybrid</span>
+                            <span class="model-desc">CNN-LSTM Combined</span>
+                            <span class="model-info">Best for overall performance</span>
+                        </span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="upload-section">
+                <h2>Upload Audio</h2>
+                <form id="upload-form" enctype="multipart/form-data">
+                    <div class="file-upload">
+                        <label for="audio-upload" class="upload-label">
+                            <div class="upload-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                            </div>
+                            <div class="upload-text">
+                                <span>Click to upload</span> or drag and drop
+                                <p class="upload-hint">WAV, MP3 (MAX. 10MB)</p>
+                            </div>
+                        </label>
+                        <input id="audio-upload" type="file" accept="audio/*" hidden>
+                    </div>
+                    <div class="selected-file-container" style="display: none;">
+                        <div class="selected-file">
+                            <span id="file-name">No file selected</span>
+                            <button type="button" id="remove-file">✕</button>
+                        </div>
+                    </div>
+                    <button type="button" id="analyze-btn" disabled>Analyze Emotion</button>
+                    <p class="analysis-note">For consistent results, each audio sample will produce the same emotion prediction when analyzed with the same model.</p>
+                </form>
+            </div>
+
+            <div class="audio-player" style="display: none;">
+                <h2>Audio Player</h2>
+                <div class="player-container">
+                    <div class="player-controls">
+                        <button id="play-pause-btn">
+                            <svg id="play-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                            <svg id="pause-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+                        </button>
+                    </div>
+                    <div id="waveform" class="waveform-container"></div>
+                    <div class="time-display">
+                        <span id="current-time">0:00</span> / <span id="total-duration">0:00</span>
+                    </div>
+                    <audio id="audio-element" hidden></audio>
+                </div>
+            </div>
+
+            <div class="results-section" style="display: none;">
+                <h2>Analysis Results</h2>
+                <div class="result-container">
+                    <div class="emotion-icon">
+                        <span id="emotion-emoji">😐</span>
+                    </div>
+                    <div class="emotion-details">
+                        <h3 id="emotion-name">Neutral</h3>
+                        <p id="model-used">Model: <span id="model-name">CNN</span></p>
+                        <div class="confidence-bar">
+                            <div class="confidence-level" style="width: 0%"></div>
+                        </div>
+                        <p class="confidence-text">Confidence: <span id="confidence-value">0%</span></p>
+                    </div>
+                </div>
+                <div class="audio-features">
+                    <h3>Audio Visualization</h3>
+                    <div class="visualization-container">
+                        <div id="frequency-visualization" class="visualization-item">
+                            <h4>Frequency Spectrum</h4>
+                            <div id="frequency-display" class="visualization-display"></div>
+                        </div>
+                        <div id="amplitude-visualization" class="visualization-item">
+                            <h4>Amplitude Envelope</h4>
+                            <div id="amplitude-display" class="visualization-display"></div>
+                        </div>
+                    </div>
+                </div>
+                <button id="new-analysis-btn">Analyze New Sample</button>
+            </div>
+
+            <div class="loading-overlay" style="display: none;">
+                <div class="spinner"></div>
+                <p>Processing...</p>
+            </div>
+        </div>
+
+        <footer>
+            <p>Speech Emotion Recognition System &copy; 2023</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html> 
